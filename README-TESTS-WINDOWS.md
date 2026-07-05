@@ -1,43 +1,38 @@
-# Tests de Requisitos Funcionales - Windows
+# Tests de requisitos funcionales en Windows
 
-## 📋 Requisitos Previos
+Guía de entorno para correr `test-requisitos-funcionales.ps1`. El script pega a los
+mismos endpoints REST que usa el frontend; no hay endpoints de testing. Su gemelo Linux
+es `test-requisitos-funcionales.sh` (misma cobertura, curl en vez de
+`Invoke-RestMethod`).
 
-### 1. SQL Server
-- **SQL Server 2019/2022** instalado y corriendo
-- Base de datos `HeladosMimoDB` creada
-- Usuario `sa` con contraseña configurada
+## Requisitos previos
 
-### 2. SQL Server Command Line Tools
-Descarga e instala desde:
-https://learn.microsoft.com/sql/tools/sqlcmd-utility
+- SQL Server 2019 o 2022 corriendo, con la base `HeladosMimoDB` creada y el usuario `sa`
+  con contraseña configurada.
+- SQL Server Command Line Tools (`sqlcmd`). Se instala con:
+  ```powershell
+  winget install Microsoft.SQLServerCommandLineUtilities
+  ```
+  o desde https://learn.microsoft.com/sql/tools/sqlcmd-utility.
+- Java 17 o superior y Maven (el wrapper `mvnw.cmd` viene en el repo).
 
-O ejecuta en PowerShell como administrador:
-```powershell
-winget install Microsoft.SQLServerCommandLineUtilities
-```
+## Configuración inicial
 
-### 3. Java y Maven
-- Java 17 o superior
-- Maven configurado
+### 1. Base de datos
 
-## 🚀 Configuración Inicial
-
-### 1. Configurar SQL Server
-
-Abre **SQL Server Management Studio (SSMS)** y ejecuta:
+En SQL Server Management Studio:
 
 ```sql
--- Crear base de datos
 CREATE DATABASE HeladosMimoDB;
 GO
-
--- Verificar usuario sa
--- Asegúrate de que la contraseña sea: YourStrong@Passw0rd
 ```
 
-### 2. Configurar application.properties
+La contraseña de `sa` que asumen los ejemplos es `YourStrong@Passw0rd`; si usás otra,
+cambiala en los dos archivos de los pasos 2 y 3.
 
-Edita `src/main/resources/application.properties`:
+### 2. application.properties
+
+Editá `src/main/resources/application.properties`:
 
 ```properties
 # Conexión SQL Server (Windows)
@@ -59,178 +54,74 @@ server.port=8080
 server.servlet.session.timeout=30m
 ```
 
-### 3. Verificar Variables en el Script
+### 3. Variables del script
 
-Edita `test-requisitos-funcionales.ps1` si es necesario:
+Editá `test-requisitos-funcionales.ps1` si tu entorno difiere:
 
 ```powershell
-# Variables de base de datos
 $DBServer = "localhost"           # Cambia si SQL Server está en otro host
 $DBName = "HeladosMimoDB"
 $DBUser = "sa"
 $DBPassword = "YourStrong@Passw0rd"  # Usa tu contraseña real
 ```
 
-## ▶️ Ejecución
+## Ejecución
 
-### 1. Iniciar Spring Boot
-
-Abre **PowerShell** en la carpeta del proyecto:
-
-```powershell
-# Compilar y ejecutar
-.\mvnw.cmd clean spring-boot:run
-```
-
-Espera a que aparezca:
-```
-Started HeladosMimosApplication in X.XXX seconds
-```
-
-### 2. Ejecutar Tests (en otra ventana de PowerShell)
-
-```powershell
-# Permitir ejecución de scripts (si es la primera vez)
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-
-# Ejecutar tests
-.\test-requisitos-funcionales.ps1
-```
-
-### 3. Interacción Durante la Ejecución
-
-El script te preguntará:
-
-```
-¿Deseas usar SQL Server para crear usuario ADMINISTRADOR_VENTAS? (s/N)
-```
-
-- **Opción `s`:** Crea usuario administrador automáticamente usando `sqlcmd`
-- **Opción `N`:** Salta setup de BD (usará API REST directamente)
-
-## 📊 Resultados Esperados
-
-```
-==========================================
-  REPORTE FINAL
-==========================================
-
-Tests ejecutados: 61
-Tests exitosos:   58
-Tests fallidos:   3
-Porcentaje:       95%
-
-Resumen de cobertura:
-  ✓ RF-03: Login/Registro de Usuarios
-  ✓ RF-01: Registro de Inventario (ADMINISTRADOR_VENTAS)
-  ✓ RF-05: Carrito de Compras
-  ✓ RF-02: Pasarela de Pagos (Validación Ficticia)
-  ✓ RF-04: Facturación
-```
-
-Los 3 tests fallidos son **esperados** (falta UI HTML).
-
-## 📁 Logs
-
-Los logs se guardan en:
-```
-.\logs\test-rf-YYYY-MM-DD_HH-mm-ss.log
-```
-
-## 🔧 Solución de Problemas
-
-### Error: "No se pudo conectar a SQL Server"
-
-**Causa:** SQL Server no está corriendo o la configuración es incorrecta.
-
-**Solución:**
-1. Abre **SQL Server Configuration Manager**
-2. Verifica que **SQL Server (MSSQLSERVER)** esté corriendo
-3. Habilita **TCP/IP** en **SQL Server Network Configuration**
-4. Reinicia el servicio SQL Server
-
-### Error: "sqlcmd no se reconoce como comando"
-
-**Causa:** SQL Server Command Line Tools no está instalado.
-
-**Solución:**
-```powershell
-winget install Microsoft.SQLServerCommandLineUtilities
-```
-
-O descarga manualmente desde:
-https://learn.microsoft.com/sql/tools/sqlcmd-utility
-
-### Error: "Spring Boot NO está corriendo"
-
-**Causa:** El servidor no está iniciado.
-
-**Solución:**
-```powershell
-.\mvnw.cmd clean spring-boot:run
-```
-
-Espera a que inicie completamente antes de ejecutar tests.
-
-### Error: "Cannot find path 'C:\...\logs'"
-
-**Causa:** La carpeta logs no existe.
-
-**Solución:**
-```powershell
-New-Item -ItemType Directory -Path .\logs
-```
-
-## 🎯 Demostración para Presentación
-
-### Preparación Rápida
-
-1. **Inicia SQL Server:**
-   - Abre **Services** (`services.msc`)
-   - Busca **SQL Server (MSSQLSERVER)**
-   - Click derecho → Start
-
-2. **Inicia Spring Boot:**
+1. Levantá la aplicación en una ventana de PowerShell:
    ```powershell
-   .\mvnw.cmd spring-boot:run
+   .\mvnw.cmd clean spring-boot:run
    ```
+   Esperá la línea `Started HeladosMimosApplication in X.XXX seconds`.
 
-3. **Ejecuta Tests:**
+2. En otra ventana, corré los tests:
    ```powershell
+   # Solo la primera vez, para permitir scripts locales
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
    .\test-requisitos-funcionales.ps1
    ```
 
-4. **Muestra el Log:**
-   ```powershell
-   Get-Content .\logs\test-rf-*.log | Select-Object -Last 50
-   ```
+3. El script pregunta si usa SQL Server para crear el usuario `ADMINISTRADOR_VENTAS`:
+   con `s` lo crea vía `sqlcmd`; con `N` salta el setup y usa solo la API REST.
 
-### Verificar Códigos de Contra Entrega
+El reporte final imprime tests ejecutados, exitosos, fallidos y porcentaje, más el
+resumen por RF (RF-01 a RF-05). Los logs quedan en
+`.\logs\test-rf-YYYY-MM-DD_HH-mm-ss.log`.
 
-Busca en la consola de Spring Boot:
+Para verificar los pagos contra entrega, buscá en la consola de Spring Boot líneas como:
+
 ```
 [PAGO CONTRA ENTREGA] Código de confirmación: 487293 - Pedido: 19
 [PAGO DATÁFONO] Código de confirmación: 821701 - Pedido: 20
 ```
 
-## 📝 Notas Adicionales
+## Solución de problemas
 
-- **Puerto 8080:** Asegúrate de que no esté en uso
-- **Firewall:** Permite conexiones a SQL Server (puerto 1433)
-- **Permisos:** Ejecuta PowerShell como **Administrador** si hay problemas de permisos
+**"No se pudo conectar a SQL Server":** el servicio no corre o TCP/IP está deshabilitado.
+En SQL Server Configuration Manager verificá que `SQL Server (MSSQLSERVER)` esté
+corriendo, habilitá TCP/IP en Network Configuration y reiniciá el servicio. El firewall
+tiene que permitir el puerto 1433.
 
-## 🔄 Comparación Bash vs PowerShell
+**"sqlcmd no se reconoce como comando":** faltan las Command Line Tools; instalalas con
+el `winget` de arriba.
 
-| Característica | Bash (Linux) | PowerShell (Windows) |
-|----------------|--------------|----------------------|
+**"Spring Boot NO está corriendo":** levantá la aplicación con
+`.\mvnw.cmd clean spring-boot:run` y esperá a que termine de iniciar. El puerto 8080
+tiene que estar libre.
+
+**"Cannot find path '...\logs'":** crea la carpeta:
+```powershell
+New-Item -ItemType Directory -Path .\logs
+```
+
+Si hay errores de permisos, abrí PowerShell como administrador.
+
+## Diferencias con la versión bash
+
+| Aspecto | Bash (Linux) | PowerShell (Windows) |
+|---|---|---|
 | Contenedores | Podman | No usa (SQL Server nativo) |
-| HTTP Client | curl | Invoke-RestMethod |
-| DB Client | podman exec sqlcmd | sqlcmd directo |
+| Cliente HTTP | curl | Invoke-RestMethod |
+| Cliente DB | podman exec sqlcmd | sqlcmd directo |
 | Logs | ./logs/ | .\logs\ |
 | Ejecutable | ./test-*.sh | .\test-*.ps1 |
-
-## 📚 Referencias
-
-- [SQL Server Documentation](https://learn.microsoft.com/sql/sql-server/)
-- [PowerShell Documentation](https://learn.microsoft.com/powershell/)
-- [Spring Boot Reference](https://docs.spring.io/spring-boot/docs/current/reference/html/)
